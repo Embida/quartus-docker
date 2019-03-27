@@ -1,13 +1,7 @@
 FROM ubuntu:16.04
 
 MOUNT quartus:/quartus
-
-VAR QUARTUS_VERSION 18.1
-
-WORKDIR /quartus
-RUN ./QuartusStandardSetup-$(QUARTUS_VERSION)*.run --mode unattended
-RUN ./SoCEDSSetup-$(QUARTUS_VERSION)*.run --mode unattended
-
+        
 # Quartus Requirements
 RUN apt-get update && apt-get install -y \
         libglib2.0-0 \
@@ -54,13 +48,23 @@ RUN dpkg --add-architecture i386 && \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /src/*.deb
 
+WORKDIR /opt/
+
+RUN     wget http://download.altera.com/akdlm/software/acdsinst/18.1std/625/ib_tar/Quartus-lite-18.1.0.625-linux.tar && \
+        tar xf Quartus-lite-18.1.0.625-linux.tar && \
+        rm Quartus-lite-18.1.0.625-linux.tar && \
+        ./setup.sh --mode unattended --accept_eula 1
+RUN     wget http://download.altera.com/akdlm/software/acdsinst/18.1std/625/ib_installers/SoCEDSSetup-18.1.0.625-linux.run && \
+        chmod +x SoCEDSSetup-18.1.0.625-linux.run && \
+        ./SoCEDSSetup-18.1.0.625-linux.run --mode unattended --accept_eula 1
+
 # Install DS-5
-WORKDIR /opt/intelFPGA/$(QUARTUS_VERSION)/embedded/ds-5_installer
+WORKDIR /opt/intelFPGA/18.1/embedded/ds-5_installer
 RUN ./install.sh --i-agree-to-the-contained-eula --no-interactive
 
-ENV PATH "$PATH:/opt/intelFPGA/$(QUARTUS_VERSION)/quartus/bin"
+ENV PATH "$PATH:/opt/intelFPGA/18.1/quartus/bin"
 ENV PATH "$PATH:/usr/local/DS-5_v5.25.0/bin"
 WORKDIR /home/ubuntu/
-TAG quartus:QUARTUS_VERSION
+TAG quartus:18.1
 
 ATTACH
