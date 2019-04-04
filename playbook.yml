@@ -7,6 +7,12 @@
     download_dir: /tmp/ansible
 
   tasks:
+  - name: Add to paths environment
+    shell: 'echo "PATH=$PATH:/opt/intelFPGA/quartus/bin:/usr/local/DS-5_v5.29.1/bin" > /etc/environment'
+
+  - name: Add to paths PATH
+    shell: export "PATH=$PATH:/opt/intelFPGA/quartus/bin:/usr/local/DS-5_v5.29.1/bin"
+
   - name: Check if libpng12-0 is installed
     command: dpkg-query -W libpng12-0
     register: my_package_check_deb
@@ -128,30 +134,40 @@
       name: repo
       state: present
 
+  - name: Check if Quartus is installed
+    stat:
+      path: "{{ install_dir }}/quartus/bin/quartus_sh"
+    register: quartus_binary
+  
   - name: Create unpack directory
     file:
       path: "{{download_dir}}/quartus"
       state: directory
       recurse: yes
       mode: "u=rw,g=wx,o=rwx"
+    when: quartus_binary.stat.exists == False
 
   - name: Download Quartus
     get_url:
       dest: "{{download_dir}}"
       url: http://download.altera.com/akdlm/software/acdsinst/18.1std/625/ib_tar/Quartus-lite-18.1.0.625-linux.tar
+    when: quartus_binary.stat.exists == False
 
   - name: Unarchive Quartus
     unarchive:
       src:  "{{download_dir}}/Quartus-lite-18.1.0.625-linux.tar"
       dest: "{{download_dir}}/quartus/" 
+    when: quartus_binary.stat.exists == False
 
   - name: Install Quartus 
     command: "{{download_dir}}/quartus/setup.sh --mode unattended --accept_eula 1 --installdir {{install_dir}} --disable-components quartus_help,quartus_update,modelsim_ase,modelsim_ae,arria_lite"
+    when: quartus_binary.stat.exists == False
 
   - name: Clean up Quartus files
     file:
       path: "{{download_dir}}"
       state: absent
+    when: quartus_binary.stat.exists == False
 
   - name: Create EDS download directory
     file:
@@ -160,31 +176,31 @@
       recurse: yes
       mode: "u=rw,g=wx,o=rwx"
 
+  - name: Check if EDS is installed
+    stat:
+      path: "{{ install_dir }}/embedded/env.sh"
+    register: eds_env
+
   - name: Download EDS
     get_url:
       dest: "{{download_dir}}"
       url: http://download.altera.com/akdlm/software/acdsinst/18.1std/625/ib_installers/SoCEDSSetup-18.1.0.625-linux.run
       mode: 0667
+    when: eds_env.stat.exists == False
   
   - name: Install EDS 
     command: "{{download_dir}}/SoCEDSSetup-18.1.0.625-linux.run --mode unattended --accept_eula 1 --installdir {{install_dir}} --disable-components qprogrammer"
+    when: eds_env.stat.exists == False
 
   - name: Clean up EDS files
     file:
       path: "{{download_dir}}"
       state: absent
+    when: eds_env.stat.exists == False
   
   - name: Install DS-5 
     command: "{{install_dir}}/embedded/ds-5_installer/install.sh --i-agree-to-the-contained-eula --no-interactive"
-  
-  - name: Add to path 
-    copy:
-      dest: /etc/profile.d/custom-path.sh
-      content: 'PATH=$PATH:{{  path }}'
-    vars:
-      path:
-        - /opt/intelFPGA/quartus/bin
-        - /usr/local/DS-5_v5.29.1/bin
+    when: eds_env.stat.exists == False
 
   - name: Clean up large files
     file:

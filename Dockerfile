@@ -9,4 +9,3 @@ RUN apt-get -qq update
 RUN apt-get -qq install -q -y ansible
 RUN ansible-playbook --connection=local --inventory 127.0.0.1, playbook.yml
 RUN rm -f playbook.yml
-
