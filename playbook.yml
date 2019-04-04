@@ -1,0 +1,193 @@
+---
+- hosts: all
+  remote_user: embida
+  become: yes
+  vars:
+    install_dir: /opt/intelFPGA
+    download_dir: /tmp/ansible
+
+  tasks:
+  - name: Check if libpng12-0 is installed
+    command: dpkg-query -W libpng12-0
+    register: my_package_check_deb
+    failed_when: my_package_check_deb.rc > 1
+    changed_when: my_package_check_deb.rc == 1
+  
+  - name: Download libpng12-0
+    get_url:
+      url: "http://security.ubuntu.com/ubuntu/pool/main/libp/libpng/libpng12-0_1.2.54-1ubuntu1.1_amd64.deb"
+      dest: "/tmp/libpng12-0_1.2.54-1ubuntu1.1_amd64.deb"
+    when: my_package_check_deb.rc == 1
+  
+  - name: Install libpng12-0
+    apt: deb="/tmp/libpng12-0_1.2.54-1ubuntu1.1_amd64.deb"
+    become: true
+    when: my_package_check_deb.rc == 1
+    
+  - name: Apt update and upgrade
+    apt:
+      upgrade: dist
+      update_cache: yes
+      
+  - name: Install apt packages
+    apt:
+      name: "{{ package }}"
+      state: present
+    vars:
+      package:
+        - build-essential
+        - libglib2.0-0
+        - libpng12-0
+        - libfreetype6
+        - libsm6
+        - libxrender1
+        - libfontconfig1
+        - libxext6
+        - default-jdk
+        - python-dev
+        - python-pip
+        - python3-dev
+        - python3-pip
+        - libc6-armel-cross
+        - libc6-dev-armel-cross
+        - binutils-arm-linux-gnueabi
+        - gcc-arm-linux-gnueabihf
+        - libncurses5-dev
+        - flex
+        - bison
+        - curl 
+        - apt-transport-https 
+        - ca-certificates 
+        - software-properties-common
+        - icedtea-netx
+        - icedtea-plugin
+        - debconf
+        - debconf-utils
+        - debootstrap 
+        - qemu-user-static
+        - htop
+        - libasound2
+        - libatk1.0-0
+        - libcairo2
+        - libgl1-mesa-glx
+        - libglu1-mesa
+        - libgtk2.0-0
+        - libxi6 
+        - libxt6 
+        - libxtst6
+
+  - name: Check if i386 is enabled
+    shell: dpkg --print-foreign-architectures | grep i386
+    register: result_i386_check
+    changed_when: result_i386_check.rc == 1
+    failed_when: result_i386_check.rc > 1
+
+  - name: Enable i386 architecture
+    command: dpkg --add-architecture i386
+    when: result_i386_check.rc == 1
+
+  - name: Ensure apt cache is up to date
+    apt: update_cache=yes
+    when: result_i386_check.rc == 1
+
+  - name: Install apt packages i386
+    apt:
+      name: "{{ package }}"
+      state: present
+      update_cache: yes
+    vars:
+      package:
+        - libc6:i386 
+        - libfontconfig1:i386 
+        - libfreetype6:i386 
+        - libgl1-mesa-glx:i386 
+        - libice6:i386 
+        - libncurses5:i386 
+        - libsm6:i386 
+        - libusb-0.1-4:i386 
+        - libxcursor1:i386 
+        - libxft2:i386 
+        - libxmu6:i386 
+        - libxrandr2:i386 
+        - libxrender1:i386 
+    
+  - name: Install Intel EDS packages
+    apt:
+      name: "{{ package }}"
+      state: present
+      update_cache: yes
+    vars:
+      package:      
+        - libstdc++6
+        - lib32stdc++6
+        - libwebkitgtk-3.0-0 
+  
+  - name: Install repo tools
+    ignore_errors: yes
+    apt:
+      name: repo
+      state: present
+
+  - name: Download Quartus
+    get_url:
+      dest: "{{download_dir}}"
+      url: http://download.altera.com/akdlm/software/acdsinst/18.1std/625/ib_tar/Quartus-lite-18.1.0.625-linux.tar
+
+  - name: Create unpack directory
+    file:
+      path: "{{download_dir}}/quartus"
+      state: directory
+
+  - name: Unarchive Quartus
+    unarchive:
+      src:  "{{download_dir}}/Quartus-lite-18.1.0.625-linux.tar"
+      dest: "{{download_dir}}/quartus/" 
+
+  - name: Install Quartus 
+    command: "{{download_dir}}/quartus/setup.sh --mode unattended --accept_eula 1 --installdir {{install_dir}} --disable-components quartus_help,quartus_update,modelsim_ase,modelsim_ae,arria_lite"
+
+  - name: Clean up Quartus files
+    file:
+      path: "{{download_dir}}"
+      state: absent
+
+  - name: Create EDS download directory
+    file:
+      path: "{{download_dir}}"
+      state: directory
+
+  - name: Download EDS
+    get_url:
+      dest: "{{download_dir}}"
+      url: http://download.altera.com/akdlm/software/acdsinst/18.1std/625/ib_installers/SoCEDSSetup-18.1.0.625-linux.run
+      mode: 0667
+  
+  - name: Install EDS 
+    command: "{{download_dir}}/SoCEDSSetup-18.1.0.625-linux.run --mode unattended --accept_eula 1 --installdir {{install_dir}} --disable-components qprogrammer"
+
+  - name: Clean up EDS files
+    file:
+      path: "{{download_dir}}"
+      state: absent
+  
+  - name: Install DS-5 
+    command: "{{install_dir}}/embedded/ds-5_installer/install.sh --i-agree-to-the-contained-eula --no-interactive"
+  
+  - name: Add to path 
+    copy:
+      dest: /etc/profile.d/custom-path.sh
+      content: 'PATH=$PATH:{{  path }}'
+    vars:
+      path:
+        - /opt/intelFPGA/quartus/bin
+        - /usr/local/DS-5_v5.29.1/bin
+
+  - name: Clean up large files
+    file:
+      path: "{{download_dir}}"
+      state: absent
+
+  - name: Clan apt
+    apt:
+      autoclean: yes
+      autoremove: yes
