@@ -7,6 +7,12 @@
     download_dir: /tmp/ansible
 
   tasks:
+  - name: Add to paths environment
+    shell: 'echo "PATH=$PATH:/opt/intelFPGA/quartus/bin:/usr/local/DS-5_v5.29.1/bin" > /etc/environment'
+
+  - name: Add to paths PATH
+    shell: export "PATH=$PATH:/opt/intelFPGA/quartus/bin:/usr/local/DS-5_v5.29.1/bin"
+
   - name: Check if libpng12-0 is installed
     command: dpkg-query -W libpng12-0
     register: my_package_check_deb
@@ -195,34 +201,6 @@
   - name: Install DS-5 
     command: "{{install_dir}}/embedded/ds-5_installer/install.sh --i-agree-to-the-contained-eula --no-interactive"
     when: eds_env.stat.exists == False
-  
-  - name: Find Quartus binary files 
-    find:
-      paths: /opt/intelFPGA/quartus/bin/
-    register: quartus_binary_files
-    #when: quartus_binary.stat.exists == False
-
-  - name: Add Quartus binaries to path
-    file:
-      src: "{{ item.path }}"
-      path: "/usr/local/bin/{{item.path | basename}}"
-      state: link
-    with_items: "{{ quartus_binary_files.files }}"
-    #when: quartus_binary.stat.exists == False
-
-  - name: Find EDS binary files 
-    find:
-      paths: /usr/local/DS-5_v5.29.1/bin/
-    register: eds_binary_files
-    #when: eds_env.stat.exists == False
-
-  - name: Add EDS binaries to path
-    file:
-      src: "{{ item.path }}"
-      path: "/usr/local/bin/{{item.path | basename}}"
-      state: link
-    with_items: "{{ eds_binary_files.files }}"
-    #when: eds_env.stat.exists == False
 
   - name: Clean up large files
     file:
