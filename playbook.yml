@@ -158,13 +158,25 @@
       url: http://download.altera.com/akdlm/software/acdsinst/18.1std/625/ib_tar/Quartus-18.1.0.625-linux.tar
     when: (quartus_binary.stat.exists == False) and (quartus_model == "standard")
     
+  - name: Download Quartus Standard Devices (Cyclone, MAX, and Stratix)
+    get_url:
+      dest: "{{download_dir}}"
+      url: http://download.altera.com/akdlm/software/acdsinst/18.1std/625/ib_tar/Quartus-18.1.0.625-devices-3.tar
+    when: (quartus_binary.stat.exists == False) and (quartus_model == "standard")
+    
+  - name: Unarchive Quartus Devices
+    unarchive:
+      src:  "{{download_dir}}/Quartus-18.1.0.625-devices-3.tar"
+      dest: "{{download_dir}}/quartus/" 
+    when: (quartus_binary.stat.exists == False) and (quartus_model == "standard")
+    
   - name: Unarchive Quartus
     unarchive:
       src:  "{{download_dir}}/Quartus-*-linux.tar"
       dest: "{{download_dir}}/quartus/" 
     when: quartus_binary.stat.exists == False
-
-  - name: Install Quartus 
+  
+  - name: Install Quartus
     command: "{{download_dir}}/quartus/setup.sh --mode unattended --accept_eula 1 --installdir {{install_dir}} --disable-components quartus_help,quartus_update,modelsim_ase,modelsim_ae,arria_lite"
     when: quartus_binary.stat.exists == False
 
