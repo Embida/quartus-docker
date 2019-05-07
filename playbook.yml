@@ -12,10 +12,10 @@
     shell: 'echo "PATH=$PATH{{ path_append }}" > /etc/environment'
 
   - name: Add to paths root .bashrc
-    shell: 'echo "export PATH=$PATH:/opt/intelFPGA/quartus/bin:/opt/intelFPGA/embedded:/usr/local/DS-5_v5.29.1/bin" >> /root/.bashrc'
+    shell: 'echo "export PATH=$PATH{{ path_append }}" >> /root/.bashrc'
 
   - name: Add to paths PATH
-    shell: export PATH=$PATH:/opt/intelFPGA/quartus/bin:/opt/intelFPGA/embedded:/usr/local/DS-5_v5.29.1/bin
+    shell: "export PATH=$PATH{{ path_append }}"
 
   - name: Check if libpng12-0 is installed
     command: dpkg-query -W libpng12-0
