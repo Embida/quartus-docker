@@ -6,6 +6,7 @@
     install_dir: /opt/intelFPGA
     download_dir: /tmp/ansible
     path_append: ":/opt/intelFPGA/quartus/bin:/opt/intelFPGA/embedded:/usr/local/DS-5_v5.29.1/bin"
+    quartus_model: "lite"
 
   tasks:
   - name: Add to paths environment
@@ -145,15 +146,21 @@
       mode: "u=rw,g=wx,o=rwx"
     when: quartus_binary.stat.exists == False
 
-  - name: Download Quartus
+  - name: Download Quartus Lite
     get_url:
       dest: "{{download_dir}}"
       url: http://download.altera.com/akdlm/software/acdsinst/18.1std/625/ib_tar/Quartus-lite-18.1.0.625-linux.tar
-    when: quartus_binary.stat.exists == False
+    when: (quartus_binary.stat.exists == False) and (quartus_model == "lite")
 
+  - name: Download Quartus Standard
+    get_url:
+      dest: "{{download_dir}}"
+      url: http://download.altera.com/akdlm/software/acdsinst/18.1std/625/ib_tar/Quartus-18.1.0.625-linux.tar
+    when: (quartus_binary.stat.exists == False) and (quartus_model == "standard")
+    
   - name: Unarchive Quartus
     unarchive:
-      src:  "{{download_dir}}/Quartus-lite-18.1.0.625-linux.tar"
+      src:  "{{download_dir}}/Quartus-*-linux.tar"
       dest: "{{download_dir}}/quartus/" 
     when: quartus_binary.stat.exists == False
 
