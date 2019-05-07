@@ -172,18 +172,19 @@
       path: "{{download_dir}}"
       state: absent
     when: quartus_binary.stat.exists == False
-
+  
+  - name: Check if EDS is installed
+    stat:
+      path: "{{ install_dir }}/embedded/env.sh"
+    register: eds_env
+    
   - name: Create EDS download directory
     file:
       path: "{{download_dir}}"
       state: directory
       recurse: yes
       mode: "u=rw,g=wx,o=rwx"
-
-  - name: Check if EDS is installed
-    stat:
-      path: "{{ install_dir }}/embedded/env.sh"
-    register: eds_env
+    when: eds_env.stat.exists == False
 
   - name: Download EDS
     get_url:
