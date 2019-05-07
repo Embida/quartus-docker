@@ -11,12 +11,6 @@
   - name: Add to paths environment
     shell: 'echo "PATH=$PATH{{ path_append }}" > /etc/environment'
 
-  - name: Add to paths root .bashrc
-    shell: 'echo "export PATH=$PATH{{ path_append }}" >> /root/.bashrc'
-
-  - name: Add to paths PATH
-    shell: "export PATH=$PATH{{ path_append }}"
-
   - name: Check if libpng12-0 is installed
     command: dpkg-query -W libpng12-0
     register: my_package_check_deb
