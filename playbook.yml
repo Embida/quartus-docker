@@ -5,16 +5,17 @@
   vars:
     install_dir: /opt/intelFPGA
     download_dir: /tmp/ansible
+    path_append: ":/opt/intelFPGA/quartus/bin:/opt/intelFPGA/embedded:/usr/local/DS-5_v5.29.1/bin"
 
   tasks:
   - name: Add to paths environment
-    shell: 'echo "PATH=$PATH:/opt/intelFPGA/quartus/bin:/usr/local/DS-5_v5.29.1/bin" > /etc/environment'
+    shell: 'echo "PATH=$PATH{{ path_append }}" > /etc/environment'
 
   - name: Add to paths root .bashrc
-    shell: 'echo "export PATH=$PATH:/opt/intelFPGA/quartus/bin:/usr/local/DS-5_v5.29.1/bin" >> /root/.bashrc'
+    shell: 'echo "export PATH=$PATH:/opt/intelFPGA/quartus/bin:/opt/intelFPGA/embedded:/usr/local/DS-5_v5.29.1/bin" >> /root/.bashrc'
 
   - name: Add to paths PATH
-    shell: export PATH=$PATH:/opt/intelFPGA/quartus/bin:/usr/local/DS-5_v5.29.1/bin
+    shell: export PATH=$PATH:/opt/intelFPGA/quartus/bin:/opt/intelFPGA/embedded:/usr/local/DS-5_v5.29.1/bin
 
   - name: Check if libpng12-0 is installed
     command: dpkg-query -W libpng12-0
