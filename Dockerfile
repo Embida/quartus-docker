@@ -11,3 +11,6 @@ RUN ansible-playbook --connection=local --inventory 127.0.0.1, playbook.yml
 RUN rm -f playbook.yml
 RUN echo ${PATH}
 ENV PATH="${PATH}"
+
+RUN apt -qq update \
+    && apt install -y git expect emacs24-nox libtcmalloc-minimal4 locales wget sudo
